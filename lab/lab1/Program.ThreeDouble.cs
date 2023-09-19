@@ -6,13 +6,6 @@ public partial class Program
     {
         protected double aLen, bLen, cLen;
 
-        public void Round() /* округление полей */
-        {
-            aLen = (int)aLen;
-            bLen = (int)bLen;
-            cLen = (int)cLen;
-        }
-
         public ThreeDouble(double aLen, double bLen, double cLen)
         {
             this.aLen = aLen;
@@ -25,6 +18,13 @@ public partial class Program
             aLen = threeDouble.aLen;
             bLen = threeDouble.bLen;
             cLen = threeDouble.cLen;
+        }
+
+        public void Round() /* округление полей */
+        {
+            aLen = (int)aLen;
+            bLen = (int)bLen;
+            cLen = (int)cLen;
         }
 
         public override string ToString() /* перегрузка метода toString */

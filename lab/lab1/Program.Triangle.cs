@@ -2,7 +2,7 @@ namespace ConsoleApp1;
 
 public partial class Program
 {
-    private class Triangle: ThreeDouble
+    private class Triangle : ThreeDouble
     {
         public Triangle(double aLen, double bLen, double cLen) : base(aLen, bLen, cLen)
         {
@@ -20,6 +20,5 @@ public partial class Program
         {
             return CalculatePerimeter() / 2.0;
         }
-
     }
 }
