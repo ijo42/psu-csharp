@@ -2,6 +2,7 @@ namespace ConsoleApp1;
 
 public partial class Program
 {
+    
     private class ThreeDouble
     {
         protected double aLen, bLen, cLen;
@@ -20,16 +21,16 @@ public partial class Program
             cLen = threeDouble.cLen;
         }
 
+        public override string ToString() /* перегрузка метода toString */
+        {
+            return $"a = {aLen}, b = {bLen}, c = {cLen}";
+        }
+
         public void Round() /* округление полей */
         {
             aLen = (int)aLen;
             bLen = (int)bLen;
             cLen = (int)cLen;
-        }
-
-        public override string ToString() /* перегрузка метода toString */
-        {
-            return $"a = {aLen}, b = {bLen}, c = {cLen}";
         }
     }
 }
