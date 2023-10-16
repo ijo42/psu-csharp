@@ -4,7 +4,7 @@ namespace ConsoleApp1.lab3;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static void Main_(string[] args)
     {
         /*var o = new Arr(
             InputDataWithCheck.InputIntegerWithValidation("Введите размерность матрицы N"), 
