@@ -122,57 +122,6 @@ namespace RomeCalc
             txtInput.Text = "";
         }
         
-        private void Window_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        {
-            switch (e.Text)
-            {
-                case "0":
-                case "1":
-                case "2":
-                case "3":
-                case "4":
-                case "5":
-                case "6":
-                case "7":
-                case "8":
-                case "9":
-                    SendToInput(e.Text);
-                    break;
-
-                case "*":
-                    btnMultiplication.PerformClick();
-                    break;
-
-                case "-":
-                    btnSubtraction.PerformClick();
-                    break;
-
-                case "+":
-                    btnSum.PerformClick();
-                    break;
-
-                case "/":
-                    btnDivision.PerformClick();
-                    break;
-                case "%":
-                    btnRemainder.PerformClick();
-                    break;
-                case "=":
-                    btnEquals.PerformClick();
-                    break;
-
-                default:
-                    //Can't use directly from switch because it is not a constant
-                        if (e.Text[0] == (char)13)
-                        btnEquals.PerformClick();
-
-                    break;
-            }
-
-            //This will prevent other buttons focus firing its click event on <ENTER> while typing
-            btnEquals.Focus();
-        }
-
          /* кнопка равенства - выполенение действия */
         private void btnEquals_Click(object sender, RoutedEventArgs e)
         {
