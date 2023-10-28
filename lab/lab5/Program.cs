@@ -7,7 +7,7 @@ public class Program
     public static void Main(string[] args)
     {
         // з. 1
-        /*var L = new List<int> {1,2,3};
+        /*var L = new List<char> {'3','j','*'};
         Console.WriteLine("Исходный список: ");
         L.ForEach(k=> Console.Write($"{k}\t"));
         ListFuncs.reverse(L);
@@ -15,14 +15,14 @@ public class Program
         L.ForEach(k=> Console.Write($"{k}\t"));*/
 
         // з. 2
-        /*var L = new LinkedList<int>(new List<int> {1,2,3});
+        /*var L = new LinkedList<char>(new List<char> {')', '*', '%'});
         Console.WriteLine("Исходный список: ");
         foreach (var word in L)
         {
             Console.Write(word + " ");
         }
 
-        ListFuncs.boundWithF(L, 1, 5);
+        ListFuncs.boundWithF(L, '*', '0');
         Console.WriteLine("\nНовый список: ");
         foreach (var word in L)
         {
@@ -38,6 +38,14 @@ public class Program
         ListFuncs.discosStatistic(allDiscos, fDiscos, sDiscos, tDiscos);*/
 
         // з. 4
+        /*var hashSet = ListFuncs.getCharsInEvenWords("text.txt");
+        Console.WriteLine("Список символов в четных словах в алфавитном порядке: ");
+        foreach (var word in hashSet)
+        {
+            Console.Write(word + " ");
+        }*/
+        
+        // з. 5
         ListFuncs.admittedApplicants("applicants.txt");
     }
 }

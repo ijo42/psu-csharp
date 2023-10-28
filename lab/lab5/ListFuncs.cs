@@ -2,14 +2,14 @@ namespace ConsoleApp1.lab5;
 
 public class ListFuncs
 {
-    public static List<int> reverse(List<int> list)
+    public static List<T> reverse <T>(List<T> list)
     {
         list.Reverse();
         return list;
     }
 
     // в списке L справа и слева от элемента E вставляет элемент F;
-    public static LinkedList<int> boundWithF(LinkedList<int> list, int searchElement, int F)
+    public static LinkedList<T> boundWithF <T>(LinkedList<T> list, T searchElement, T F)
     {
         var element = list.Find(searchElement);
         if(element != null)
@@ -61,6 +61,29 @@ public class ListFuncs
         {
             Console.Write($"{disco}\t");
         }
+    }
+
+
+    public static HashSet<char> getCharsInEvenWords(string filename)
+    {
+        var chars = new HashSet<char>();
+        
+        using var fr = File.OpenText("/home/ijo42/RiderProjects/ConsoleApp1/lab/lab5/" + filename);
+        int k = 0;
+        for (var s = fr.ReadLine(); s != null; s = fr.ReadLine())
+        {
+            var line = s.Split(" ");
+            foreach (var word in line)
+            {
+                if(++k % 2 == 1)
+                    foreach (var c in word)
+                    {
+                        chars.Add(c);
+                    }
+            }
+        }
+
+        return chars.OrderBy(s=>s).ToHashSet();
     }
     
     public static void admittedApplicants(string filename)
