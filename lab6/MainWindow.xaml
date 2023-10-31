@@ -28,11 +28,11 @@
         </Grid.ColumnDefinitions>
         <TextBox x:Name="txtInput" Grid.Row="0" Grid.ColumnSpan="6" Margin="2" TextAlignment="Right" Text="0" FontSize="27" IsReadOnly="True"/>
         
-        <Button x:Name="btnL" Content="L" Grid.Row="5" Grid.Column="0" FontSize="20" Margin="2" Click="regularButtonClick"/>
+        <Button x:Name="btnL" Content="L" Grid.Row="4" Grid.Column="0" FontSize="20" Margin="2" Click="regularButtonClick"/>
         <Button x:Name="btnI" Content="I" Grid.Row="1" Grid.Column="0" FontSize="20" Margin="2" Click="regularButtonClick"/>
         <Button x:Name="btnV" Content="V" Grid.Row="2" Grid.Column="0" FontSize="20" Margin="2" Click="regularButtonClick"/>
         <Button x:Name="btnX" Content="X" Grid.Row="3" Grid.Column="0" FontSize="20" Margin="2" Click="regularButtonClick"/>
-        <Button x:Name="btnC" Content="C" Grid.Row="4" Grid.Column="0" FontSize="20" Margin="2" Click="regularButtonClick"/>
+        <Button x:Name="btnC" Content="C" Grid.Row="5" Grid.Column="0" FontSize="20" Margin="2" Click="regularButtonClick"/>
         <Button x:Name="btnM" Content="M" Grid.Row="5" Grid.Column="1" FontSize="20" Margin="2" Click="regularButtonClick"/>
         
         <Button x:Name="btnB" Content=">" Grid.Row="1" Grid.Column="5" FontSize="20" Margin="2" Click="operationButton_Click"/>

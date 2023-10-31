@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using RomeCalc.Utils;
 
 namespace RomeCalc
@@ -25,9 +24,9 @@ namespace RomeCalc
         {
             InitializeComponent();
             btnSum.Tag = new Sum();
-            btnSubtraction.Tag = new Subtraction();
-            btnDivision.Tag = new Division();
-            btnMultiplication.Tag = new Multiplication();
+            btnSubtraction.Tag = new Sub();
+            btnDivision.Tag = new Div();
+            btnMultiplication.Tag = new Mult();
             btnRemainder.Tag = new Remainder();
             btnLe.Tag = new Less();
             btnLE.Tag = new LessEquals();
@@ -62,9 +61,7 @@ namespace RomeCalc
         }
 
         /* метод для кнопок ввода цифр */
-        private void regularButtonClick(object sender, RoutedEventArgs e)
-            => SendToInput(((Button)sender).Content.ToString());
-        
+
         private void SendToInput(string content)
         {
             if (activeButtons == ActiveButtons.All)
@@ -79,6 +76,9 @@ namespace RomeCalc
 
             txtInput.Text = $"{txtInput.Text}{content}";
         }
+
+        private void regularButtonClick(object sender, RoutedEventArgs e)
+            => SendToInput(((Button)sender).Content.ToString());
 
         /* перевод в римскую */
         private void btnToRome_Click(object sender, RoutedEventArgs e)
@@ -144,7 +144,7 @@ namespace RomeCalc
 
             try
             {
-                var result = CurrentOperation.DoOperation(FirstValue, (int)(SecondValue = val2));
+                var result = CurrentOperation.DoOp(FirstValue, (int)(SecondValue = val2));
                 if (result < 0)
                 {
                     MessageBox.Show("Доступны операции лишь для неотрицательных значений",
