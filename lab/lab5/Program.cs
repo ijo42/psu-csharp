@@ -4,7 +4,7 @@ namespace ConsoleApp1.lab5;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static void Main_(string[] args)
     {
         // з. 1
         /*var L = new List<char> {'3','j','*'};
