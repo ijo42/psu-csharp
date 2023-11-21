@@ -5,71 +5,6 @@ namespace Компилятор
 {
     class LexicalAnalyzer
     {
-        public const byte   // описание лексем
-            star = 21, // *
-            slash = 60, // /
-            equal = 16, // =
-            comma = 20, // ,
-            semicolon = 14, // ;
-            colon = 5, // :
-            point = 61,	// .
-            arrow = 62,	// ^
-            leftpar = 9,	// (
-            rightpar = 4,	// )
-            lbracket = 11,	// [
-            rbracket = 12,	// ]
-            flpar = 63,	// {
-            frpar = 64,	// }
-            later = 65,	// <
-            greater = 66,	// >
-            laterequal = 67,	//  <=
-            greaterequal = 68,	//  >=
-            latergreater = 69,	//  <>
-            plus = 70,	// +
-            minus = 71,	// –
-            lcomment = 72,	//  (*15
-            rcomment = 73,	//  *)
-            assign = 51,	//  :=
-            twopoints = 74,	//  ..
-            ident = 2,	// идентификатор
-            floatc = 82,	// вещественная константа
-            intc = 15,	// целая константа
-            casesy = 31,
-            elsesy = 32,
-            filesy = 57,
-            gotosy = 33,
-            thensy = 52,
-            typesy = 34,
-            untilsy = 53,
-            dosy = 54,
-            withsy = 37,
-            ifsy = 56,
-            insy = 100,
-            ofsy = 101,
-            orsy = 102,
-            tosy = 103,
-            endsy = 104,
-            varsy = 105,
-            divsy = 106,
-            andsy = 107,
-            notsy = 108,
-            forsy = 109,
-            modsy = 110,
-            nilsy = 111,
-            setsy = 112,
-            beginsy = 113,
-            whilesy = 114,
-            arraysy = 115,
-            constsy = 116,
-            labelsy = 117,
-            downtosy = 118,
-            packedsy = 119,
-            recordsy = 120,
-            repeatsy = 121,
-            programsy = 122,
-            functionsy = 123,
-            procedurensy = 124;
-
         private byte symbol; // код символа
         private TextPosition token; // позиция символа
         private string addrName; // адрес идентификатора в таблице имен
@@ -80,20 +15,27 @@ namespace Компилятор
         private readonly Dictionary<byte, Dictionary<string, byte>> keywords = new Keywords().Kw;
         
         /* работа лексического анализатора*/
-        public void process()
+        public Queue<byte> process()
         {
-            var list = new List<byte>();
+            var lexemes = new Queue<byte>();
             while (!InputOutput.isEnd)
             {
-                list.Add(NextSym());
+                lexemes.Enqueue(NextSym());
             }
-            list.ForEach(s => Console.Write($"{s} "));
+
+            foreach (var VARIABLE in lexemes)
+            {
+                Console.Write($"{VARIABLE}\t");
+            }                Console.WriteLine();
+
+            return lexemes;
         }
 
         private byte NextSym()
         {
             // пропуск пробелов и табуляций
             while (!InputOutput.isEnd && InputOutput.Ch is ' ' or '\t') InputOutput.NextCh();
+            symbol = 255;
             token.lineNumber = InputOutput.positionNow.lineNumber;
             token.charNumber = InputOutput.positionNow.charNumber;
 
@@ -101,7 +43,7 @@ namespace Компилятор
             switch (InputOutput.Ch)
             {
                 // regexp для цифры
-                case var chr when new Regex("^\\d$").IsMatch(chr.ToString()):
+                case var chr when char.IsDigit(chr):
                     nmb_int = 0;
                     while (InputOutput.Ch >= '0' && InputOutput.Ch <= '9')
                     {
@@ -119,14 +61,12 @@ namespace Компилятор
                         }
                         InputOutput.NextCh();
                     }
-                    symbol = intc;
+                    symbol = Lexemes.intc;
                     break;
                 // regexp для буквы
-                case var chr when new Regex("^[a-zA-Z]$").IsMatch(chr.ToString()):
+                case var chr when char.IsLetter(chr):
                     var name = "";
-                    while  (InputOutput.Ch >= 'a' && InputOutput.Ch <= 'z' ||
-                            InputOutput.Ch >= 'A' && InputOutput.Ch <= 'Z' ||
-                            InputOutput.Ch >= '0' && InputOutput.Ch <= '9')
+                    while  (char.IsLetter(InputOutput.Ch) || char.IsDigit(InputOutput.Ch))
                     {
                         name += InputOutput.Ch;
                         InputOutput.NextCh();
@@ -138,14 +78,14 @@ namespace Компилятор
                     {
                         lengthEntry.TryGetValue(name, out keywordKey);
                     }
-                    symbol = keywordKey;
+
+                    //Types.Kw.TryGetValue(name, out var typeKey);
+
+                    symbol = (byte)(keywordKey /*+ (typeKey > 0 ? Lexemes.typesy : 0)*/);
 
                     /* ошибка если ключевого слова не найдено */
-                    if (keywordKey == 0)
-                    {
-                        InputOutput.Error(202, InputOutput.positionNow);
-                        InputOutput.NextCh();
-                    }
+                    
+                    symbol = symbol == 0 ? Lexemes.ident : symbol;
 
                     break;
                 case '<':
@@ -154,13 +94,13 @@ namespace Компилятор
                    switch (InputOutput.Ch)
                    {
                        case '=':
-                           symbol = laterequal; InputOutput.NextCh();
+                           symbol = Lexemes.laterequal; InputOutput.NextCh();
                            break;
                        case '>':
-                           symbol = latergreater; InputOutput.NextCh();
+                           symbol = Lexemes.latergreater; InputOutput.NextCh();
                            break;
                        default:
-                           symbol = later;
+                           symbol = Lexemes.later;
                            break;
                    }
                     break;                
@@ -169,10 +109,10 @@ namespace Компилятор
                    switch (InputOutput.Ch)
                    {
                        case '=':
-                           symbol = greaterequal; InputOutput.NextCh();
+                           symbol = Lexemes.greaterequal; InputOutput.NextCh();
                            break;
                        default:
-                           symbol = greater;
+                           symbol = Lexemes.greater;
                            break;
                    }
                     break;
@@ -180,36 +120,49 @@ namespace Компилятор
                     InputOutput.NextCh();
                     if (InputOutput.Ch == '=')
                     {
-                        symbol = assign; InputOutput.NextCh();
+                        symbol = Lexemes.assign; InputOutput.NextCh();
                     }
                     else
-                        symbol = colon;
+                        symbol = Lexemes.colon;
                     break;
                 case ';':
-                    symbol = semicolon;
+                    symbol = Lexemes.semicolon;
                     InputOutput.NextCh();
                     break;
                 case '.':
                     InputOutput.NextCh();
                     if (InputOutput.Ch == '.')
                     {
-                        symbol = twopoints; InputOutput.NextCh();
+                        symbol = Lexemes.twopoints; InputOutput.NextCh();
                     }
-                    else symbol = point;
+                    else symbol = Lexemes.point;
+                    break;
+                case ',':
+                    InputOutput.NextCh();
+                    symbol = Lexemes.comma;
                     break;
                 case '=':
-                    symbol = equal;
+                    symbol = Lexemes.equal;
                     InputOutput.NextCh();
                     break;
                 /* многострочные комментарии */
                 case '{':
                     while (!InputOutput.isEnd)
                     {
-                        if (InputOutput.Ch != '}')
+                        if (InputOutput.Ch == '}')
+                        {
                             InputOutput.NextCh();
-                        else
-                            break;
+                            return NextSym();
+                        }
+                        InputOutput.NextCh();
                     }             
+                    break;
+                case '*':
+                    symbol = Lexemes.star;
+                    InputOutput.NextCh();
+                    break;
+                case '/':
+                    symbol = Lexemes.slash;
                     InputOutput.NextCh();
                     break;
                 default:

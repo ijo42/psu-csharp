@@ -6,7 +6,7 @@ namespace Компилятор
     {
         const byte ERRMAX = 9;
         public static char Ch { get; private set; }
-        public static TextPosition positionNow = new TextPosition();
+        public static TextPosition positionNow;
         public static bool isEnd = false;
         private static string line;
         private static byte lastInLine = 0;
@@ -26,7 +26,10 @@ namespace Компилятор
         public static void process()
         {
             var lexicalAnalyzer = new LexicalAnalyzer();
-            lexicalAnalyzer.process();
+            var lexemes = lexicalAnalyzer.process();
+            var syntaxAnalyzer = new SyntaxAnalyzer(lexemes);
+            syntaxAnalyzer.programme();
+
         }
 
         /* инкремент позиции чтения */
@@ -37,8 +40,11 @@ namespace Компилятор
                 ListThisLine();
                 if (err.Count > 0)
                         ListErrors();
-                ReadNextLine();
-                positionNow.lineNumber++;
+                do
+                {
+                    ReadNextLine();
+                    positionNow.lineNumber++;
+                } while (line.Length == 0 && !isEnd);
                 positionNow.charNumber = 0;
            }
            else ++positionNow.charNumber;
@@ -69,7 +75,7 @@ namespace Компилятор
         static void End()
         {
             isEnd = true;
-            Console.WriteLine($"Компиляция завершена: : ошибок — {errCount}!");
+            Console.WriteLine($"Лексический анализ завершен: ошибок — {errCount}!");
         }
 
         /* вывод ошибок */
