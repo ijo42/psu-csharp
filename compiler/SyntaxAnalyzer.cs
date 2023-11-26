@@ -2,359 +2,352 @@ namespace Компилятор
 {
     class SyntaxAnalyzer
     {
-        private readonly Queue<LexemeCoord> _lexemes;
-
-        public SyntaxAnalyzer(Queue<LexemeCoord> lexemes)
+        private readonly Func<byte> _lexicalNext;
+        private byte _lexeme;
+        private TextPosition _position;
+        private string? errorMsg = null;
+        public SyntaxAnalyzer(Func<byte> lexicalNext)
         {
-            _lexemes = lexemes;
+            _lexicalNext = lexicalNext;
+        }
+        
+        public void Process()
+        {
+            NextSym();
+            Programme();
         }
 
-        TextPosition position()
+        void NextSym()
         {
-            return _lexemes.Peek().Position;
+            _position = InputOutput.positionNow;
+            _lexeme = InputOutput.isEnd ? (byte)255 : _lexicalNext();
         }
 
-        byte token()
+        void Accept(byte expectedtoken)
         {
-            try
-            {
-                return _lexemes.Peek().Lexem;
-            }
-            catch
-            {
-                return 255;
-            }
+            Accept(expectedtoken, new HashSet<byte>());
         }
-
-        LexemeCoord nextsym()
+        void Accept(byte expectedtoken, HashSet<byte> suitable)
         {
-            return _lexemes.Dequeue();
-        }
-
-        void accept(byte expectedtoken)
-        {
-            accept(expectedtoken, new HashSet<byte>());
-        }
-        void accept(byte expectedtoken, HashSet<byte> suitable)
-        {
-            if(token() == 255)
+            if(_lexeme == 255)
                 return;
-            if (token() != expectedtoken)
+            if (_lexeme != expectedtoken)
             {
-                error(expectedtoken, token());
+                var l = _lexeme;
+                var pos = _position;
                 if(suitable.Count > 0)
-                    skip(suitable);
+                    Skip(suitable);
+                Error(expectedtoken, l, pos);
             }
-            if(_lexemes.Count > 0)
-                nextsym();
+            NextSym();
         }
 
-        private bool commaNext()
+        private bool CommaNext()
         {
-            var o = token() == Lexemes.comma;
+            var o = _lexeme == Lexemes.comma;
             if (o)
-                nextsym();
+                NextSym();
             return o;
         }
 
-        void error(byte expectedToken, byte token)
+        void Error(byte expectedToken, byte token, TextPosition position)
         {
-            InputOutput.Error(203, position());
-            InputOutput.printSyntaxError();
-            Console.WriteLine($"\r Ожидалось {expectedToken}, найдено {token}");
+            InputOutput.Error(203, position, $" - Ожидалось {expectedToken}, найдено {token}" +
+                                              (errorMsg!=null ? $"{errorMsg}" : ""));
+            errorMsg = null;
         }
 
-        void skip(HashSet<byte> suitable)
+        void Skip(HashSet<byte> suitable)
         {
             int i;
-            for (i = 0; !suitable.Contains(token()) && _lexemes.Count > 0; i++)
+            for (i = 0; !suitable.Contains(_lexeme) && _lexeme != 255; i++)
             {
-                nextsym();
+                NextSym();
             }
-            Console.WriteLine($"% Пропущено {i} лексемы для продолжения работы");
+            errorMsg = $"\n% Пропущено {i} лексемы для продолжения работы";
         }
 
-        public void programme()
+        public void Programme()
         {
-            accept(Lexemes.programsy);
-            accept(Lexemes.ident);
-            accept(Lexemes.semicolon);
-            block();
-            accept(Lexemes.point);
+            Accept(Lexemes.programsy);
+            Accept(Lexemes.ident);
+            Accept(Lexemes.semicolon);
+            Block();
+            Accept(Lexemes.point);
         }
 
-        public void block()
+        public void Block()
         {
-            labelpart();
-            constpart();
-            typepart();
-            varpart();
+            Labelpart();
+            Constpart();
+            Typepart();
+            Varpart();
             // procfuncpart();
             // functionpart()
-            statementpart();
+            Statementpart();
         }
 
-        void statementpart()
+        void Statementpart()
         {
-            accept(Lexemes.beginsy, new HashSet<byte> {Lexemes.beginsy});
+            Accept(Lexemes.beginsy, new HashSet<byte> {Lexemes.beginsy});
 
             do
             {
-                statement();
-                if(token() is Lexemes.endsy or 255)
+                Statement();
+                if(_lexeme is Lexemes.endsy or 255)
                     break;
-                accept(Lexemes.semicolon);
+                Accept(Lexemes.semicolon);
             } while (true);
 
-            accept(Lexemes.endsy);
+            Accept(Lexemes.endsy);
         }
 
-        void statement() // оператор
+        void Statement() // оператор
         {
-            switch (token())
+            switch (_lexeme)
             {
                 case Lexemes.ident:
-                    assignpart();
+                    Assignpart();
                     break;
                 case Lexemes.beginsy:
-                    accept(Lexemes.beginsy);
+                    Accept(Lexemes.beginsy);
                     do
                     {
-                        statement();
-                        if (token() == Lexemes.endsy)
+                        Statement();
+                        if (_lexeme == Lexemes.endsy)
                             break;
-                        accept(Lexemes.semicolon);
+                        Accept(Lexemes.semicolon);
                     } while (true);
 
-                    accept(Lexemes.endsy);
+                    Accept(Lexemes.endsy);
                     break;
                 case Lexemes.forsy:
-                    accept(Lexemes.forsy);
-                    forstatement();
+                    Accept(Lexemes.forsy);
+                    Forstatement();
                     break;
                 case Lexemes.withsy:
-                    accept(Lexemes.withsy, new HashSet<byte>{Lexemes.withsy, Lexemes.ident});
-                    withpart();
+                    Accept(Lexemes.withsy, new HashSet<byte>{Lexemes.withsy, Lexemes.ident});
+                    Withpart();
                     break;
             }
         }
 
-        private void withpart()
+        private void Withpart()
         {
             do {
-                accept(Lexemes.ident);
-            } while (commaNext());
-            accept(Lexemes.dosy);
-            statement();
+                Accept(Lexemes.ident);
+            } while (CommaNext());
+            Accept(Lexemes.dosy);
+            Statement();
         }
 
-        void assignpart()
+        void Assignpart()
         {
-            accept(Lexemes.ident);
-            accept(Lexemes.assign);
-            expression();
+            Accept(Lexemes.ident);
+            Accept(Lexemes.assign);
+            Expression();
         }
 
-        readonly List<byte> relations = new()
+        readonly List<byte> _relations = new()
         {
             Lexemes.equal, Lexemes.greater, Lexemes.later,
             Lexemes.greaterequal, Lexemes.laterequal, Lexemes.latergreater, Lexemes.insy
         };
-        void expression()
+        void Expression()
         {
-            simpleExpression();
-            if (relations.Contains(token()))
+            SimpleExpression();
+            if (_relations.Contains(_lexeme))
             {
-                nextsym();
-                simpleExpression();
+                NextSym();
+                SimpleExpression();
             }
         }
 
-        void simpleExpression()
+        void SimpleExpression()
         {
-            if (token() is Lexemes.plus or Lexemes.minus)
-                nextsym();
-            summingpart();
-            while (token() is Lexemes.plus or Lexemes.minus or Lexemes.orsy)
+            if (_lexeme is Lexemes.plus or Lexemes.minus)
+                NextSym();
+            Summingpart();
+            while (_lexeme is Lexemes.plus or Lexemes.minus or Lexemes.orsy)
             {
-                nextsym();
-                summingpart();
+                NextSym();
+                Summingpart();
             }
         }
 
-        void summingpart()
+        void Summingpart()
         {
-            multiplierpart();
-            while (token() is Lexemes.star or Lexemes.slash or Lexemes.divsy or Lexemes.modsy or Lexemes.andsy)
+            Multiplierpart();
+            while (_lexeme is Lexemes.star or Lexemes.slash or Lexemes.divsy or Lexemes.modsy or Lexemes.andsy)
             {
-                nextsym();
-                multiplierpart();
+                NextSym();
+                Multiplierpart();
             }
         }
 
-        private void multiplierpart()
+        private void Multiplierpart()
         {
-            switch (token())
+            switch (_lexeme)
             {
                 case Lexemes.lbracket:
-                    accept(Lexemes.lbracket);
-                    if(token() == Lexemes.rbracket)
-                        accept(Lexemes.rbracket);
+                    Accept(Lexemes.lbracket);
+                    if(_lexeme == Lexemes.rbracket)
+                        Accept(Lexemes.rbracket);
                     else
                     {
                         do
                         {
-                            expression();
-                            if (token() == Lexemes.twopoints)
+                            Expression();
+                            if (_lexeme == Lexemes.twopoints)
                             {
-                                expression();
+                                Expression();
                             }
-                        } while (commaNext());
-                        accept(Lexemes.rbracket);
+                        } while (CommaNext());
+                        Accept(Lexemes.rbracket);
                     }
                     break;
                 case Lexemes.notsy:
-                    accept(Lexemes.notsy);
-                    expression();
+                    Accept(Lexemes.notsy);
+                    Expression();
                     break;
                 case Lexemes.leftpar:
-                    accept(Lexemes.leftpar);
-                    expression();
-                    accept(Lexemes.rightpar);
+                    Accept(Lexemes.leftpar);
+                    Expression();
+                    Accept(Lexemes.rightpar);
                     break;
                 case Lexemes.ident:
-                    accept(Lexemes.ident);
+                    Accept(Lexemes.ident);
                     break;
                 case Lexemes.intc:
-                    accept(Lexemes.intc);
+                    Accept(Lexemes.intc);
                     break;
                 case Lexemes.floatc:
-                    accept(Lexemes.floatc);
+                    Accept(Lexemes.floatc);
                     break;
             }
         }
 
-        void forstatement()
+        void Forstatement()
         {
-            accept(Lexemes.forsy);
-            accept(Lexemes.ident);
-            accept(Lexemes.assign);
-            expression();
-            if (token()==Lexemes.tosy || token() == Lexemes.downtosy)
-                nextsym();
-            expression();
-            accept(Lexemes.dosy);
-            statement();
+            Accept(Lexemes.forsy);
+            Accept(Lexemes.ident);
+            Accept(Lexemes.assign);
+            Expression();
+            if (_lexeme==Lexemes.tosy || _lexeme == Lexemes.downtosy)
+                NextSym();
+            Expression();
+            Accept(Lexemes.dosy);
+            Statement();
         }
-        void whilestatement()
+        void Whilestatement()
         {
-            accept(Lexemes.whilesy);
-            expression();
-            accept(Lexemes.dosy);
-            statement();
+            Accept(Lexemes.whilesy);
+            Expression();
+            Accept(Lexemes.dosy);
+            Statement();
         }
 
-        void compoundstatement()
+        void Compoundstatement()
         {
-            accept(Lexemes.beginsy);
-            statement();
-            while (token() == Lexemes.semicolon)
+            Accept(Lexemes.beginsy);
+            Statement();
+            while (_lexeme == Lexemes.semicolon)
             {
-                nextsym();
-                statement();
+                NextSym();
+                Statement();
             }
-            accept(Lexemes.endsy);
+            Accept(Lexemes.endsy);
         }
 
-        void typepart()
+        void Typepart()
         {
-            if (token() == Lexemes.typesy)
+            if (_lexeme == Lexemes.typesy)
             {
-                accept(Lexemes.typesy);
+                Accept(Lexemes.typesy);
                 do
                 {
-                    typedec();
-                    accept(Lexemes.semicolon);
-                } while (token() == Lexemes.ident);
+                    Typedec();
+                    Accept(Lexemes.semicolon);
+                } while (_lexeme == Lexemes.ident);
             }
         }
 
-        void typedec()
+        void Typedec()
         {
-            accept(Lexemes.ident);
-            accept(Lexemes.equal);
-            type();
+            Accept(Lexemes.ident);
+            Accept(Lexemes.equal);
+            Type();
         }
         
-        void varpart()
+        void Varpart()
         {
-            if (token() == Lexemes.varsy)
+            if (_lexeme == Lexemes.varsy)
             {
-                accept(Lexemes.varsy);
+                Accept(Lexemes.varsy);
                 do
                 {
-                    vardeclaration();
-                    accept(Lexemes.semicolon);
-                } while (token() == Lexemes.ident);
+                    Vardeclaration();
+                    Accept(Lexemes.semicolon);
+                } while (_lexeme == Lexemes.ident);
             }
         }
 
-        private readonly HashSet<byte> varContinue = new()
+        private readonly HashSet<byte> _varContinue = new()
         {
             Lexemes.colon, Lexemes.ident, Lexemes.comma
         };
 
-        void vardeclaration()
+        void Vardeclaration()
         {
             do
             {
-                accept(Lexemes.ident, varContinue);
-            } while (commaNext());
-            accept(Lexemes.colon, varContinue);
-            type();
+                Accept(Lexemes.ident, _varContinue);
+            } while (CommaNext());
+            Accept(Lexemes.colon, _varContinue);
+            Type();
         }
 
-        void type()
+        void Type()
         {
-           if(simpleType()) return;
-           if(compoundType()) return;
-           refType();
+           if(SimpleType()) return;
+           if(CompoundType()) return;
+           RefType();
         }
         
-        bool simpleType()
+        bool SimpleType()
         {
             var flag = false;
-            switch (token())
+            switch (_lexeme)
             {
                 case Lexemes.leftpar:
                     // enum type
-                    accept(Lexemes.leftpar);
-                    accept(Lexemes.ident);
-                    while(commaNext())
+                    Accept(Lexemes.leftpar);
+                    Accept(Lexemes.ident);
+                    while(CommaNext())
                     {
-                        accept(Lexemes.ident);
+                        Accept(Lexemes.ident);
                     }
-                    accept(Lexemes.rightpar);
+                    Accept(Lexemes.rightpar);
                     flag = true;
 
                 break;
                 case Lexemes.floatc:
                     // Limited type
-                    accept(Lexemes.floatc);
-                    accept(Lexemes.twopoints);
-                    accept(Lexemes.floatc);
+                    Accept(Lexemes.floatc);
+                    Accept(Lexemes.twopoints);
+                    Accept(Lexemes.floatc);
                     flag = true;
                     break;
                 case Lexemes.intc:
                     // Limited type
-                    accept(Lexemes.intc);
-                    accept(Lexemes.twopoints);
-                    accept(Lexemes.intc);
+                    Accept(Lexemes.intc);
+                    Accept(Lexemes.twopoints);
+                    Accept(Lexemes.intc);
                     flag = true;
                 break;
                 case Lexemes.ident:
                     // type name
-                    accept(Lexemes.ident);
+                    Accept(Lexemes.ident);
                     flag = true;
                     break;
             }
@@ -362,17 +355,17 @@ namespace Компилятор
             return flag;
         }
 
-        bool compoundType()
+        bool CompoundType()
         {
-            if(token() == Lexemes.packedsy)
-                accept(Lexemes.packedsy);
-            switch (token())
+            if(_lexeme == Lexemes.packedsy)
+                Accept(Lexemes.packedsy);
+            switch (_lexeme)
             {
                 case Lexemes.arraysy:
                     break;
                 case Lexemes.recordsy:
-                    accept(Lexemes.recordsy);
-                    if (token() == Lexemes.casesy)
+                    Accept(Lexemes.recordsy);
+                    if (_lexeme == Lexemes.casesy)
                     {
                         
                     }
@@ -380,10 +373,10 @@ namespace Компилятор
                     {
                         do
                         {
-                            vardeclaration();
-                        } while (token() == Lexemes.semicolon);
+                            Vardeclaration();
+                        } while (_lexeme == Lexemes.semicolon);
                     }
-                    accept(Lexemes.endsy);
+                    Accept(Lexemes.endsy);
                     break;
                 case Lexemes.setsy:
                     break;
@@ -393,46 +386,46 @@ namespace Компилятор
             return false;
         }
 
-        bool refType()
+        bool RefType()
         {
-            if (token() == Lexemes.arrow)
+            if (_lexeme == Lexemes.arrow)
             {
-                accept(Lexemes.arraysy);
-                accept(Lexemes.ident);
+                Accept(Lexemes.arraysy);
+                Accept(Lexemes.ident);
                 return true;
             }
             return false;
         }
 
-        void labelpart()
+        void Labelpart()
         {
-            if(token() == Lexemes.labelsy)
+            if(_lexeme == Lexemes.labelsy)
             {
-                accept(Lexemes.labelsy);
+                Accept(Lexemes.labelsy);
                 do
                 {
-                    accept(Lexemes.intc);
-                    if (token() != Lexemes.comma)
+                    Accept(Lexemes.intc);
+                    if (_lexeme != Lexemes.comma)
                         break;
-                    accept(Lexemes.comma);
+                    Accept(Lexemes.comma);
                 } while (true);
 
-                accept(Lexemes.semicolon);
+                Accept(Lexemes.semicolon);
             }
         }
 
-        void constpart()
+        void Constpart()
         {
-            if(token() == Lexemes.constsy)
+            if(_lexeme == Lexemes.constsy)
             {
-                accept(Lexemes.constsy);
+                Accept(Lexemes.constsy);
                 do
                 {
-                    accept(Lexemes.ident);
-                    accept(Lexemes.equal);
-                    accept(Lexemes.intc); // or float or char
-                    accept(Lexemes.semicolon);
-                } while (token() == Lexemes.ident);
+                    Accept(Lexemes.ident);
+                    Accept(Lexemes.equal);
+                    Accept(Lexemes.intc); // or float or char
+                    Accept(Lexemes.semicolon);
+                } while (_lexeme == Lexemes.ident);
             }
         }
     }

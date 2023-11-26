@@ -27,10 +27,12 @@ namespace Компилятор
         public static void process()
         {
             var lexicalAnalyzer = new LexicalAnalyzer();
-            var lexemes = lexicalAnalyzer.process();
-            var syntaxAnalyzer = new SyntaxAnalyzer(lexemes);
-            syntaxAnalyzer.programme();
+            var syntaxAnalyzer = new SyntaxAnalyzer(() => lexicalAnalyzer.process());
 
+            while(!isEnd)
+            {
+                syntaxAnalyzer.Process();
+            }
         }
 
         /* инкремент позиции чтения */
@@ -72,23 +74,16 @@ namespace Компилятор
             {
                 End();
             }
-            
         }
 
         static void End()
         {
             isEnd = true;
-            Console.WriteLine($"Синтаксический анализ завершен: ошибок — {errCount}!");
-        }
-
-        public static void printSyntaxError()
-        {
-            Console.WriteLine(fileContent[(int)err[0].errorPosition.lineNumber-1]);
-            ListErrors();
+            Console.WriteLine($"Анализ завершен: ошибок — {errCount}!");
         }
 
         /* вывод ошибок */
-        public static void ListErrors()
+        static void ListErrors()
         {
             var pos = 6 - $"{positionNow.lineNumber} ".Length;
             string s;
@@ -99,7 +94,7 @@ namespace Компилятор
                 if (errCount < 10) s += "0";
                 s += $"{errCount}**";
                 while (s.Length +3 < pos + item.errorPosition.charNumber) s += " ";
-                s += $"^ ошибка {item.errorCode}";
+                s += $"^ ошибка {item.errorCode} {item.desc}";
                 Console.WriteLine(s);
             }
         }
@@ -107,9 +102,13 @@ namespace Компилятор
         /* запись ошибок */
         public static void Error(byte errorCode, TextPosition position)
         {
+            Error(errorCode, position, null);
+        }        /* запись ошибок */
+        public static void Error(byte errorCode, TextPosition position, string? description)
+        {
             if (err.Count <= ERRMAX)
             {
-                var e = new Err(position, ErrorCodes.Dictionary[errorCode]);
+                var e = new Err(position, ErrorCodes.Dictionary[errorCode], description);
                 err.Add(e);
             }
         }

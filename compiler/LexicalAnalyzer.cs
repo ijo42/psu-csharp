@@ -14,21 +14,11 @@ namespace Компилятор
         private const short MaxInt = short.MaxValue;
         private readonly Dictionary<byte, Dictionary<string, byte>> keywords = new Keywords().Kw;
         
+
         /* работа лексического анализатора*/
-        public Queue<LexemeCoord> process()
+        public byte process()
         {
-            var lexemes = new Queue<LexemeCoord>();
-            while (!InputOutput.isEnd)
-            {
-                lexemes.Enqueue(new LexemeCoord(NextSym(), token));
-            }
-
-            /*foreach (var VARIABLE in lexemes)
-            {
-                Console.Write($"{VARIABLE.Lexem}\t");
-            }                Console.WriteLine();*/
-
-            return lexemes;
+            return NextSym();
         }
 
         private byte NextSym()

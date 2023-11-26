@@ -1,7 +1,7 @@
 program a;
 var { начало }
     d : record k,b : integer end;
-    c, 9 SS, d : number; 
+    c, SS, 5 d : number; 
  begin
  begin
     k := o;
