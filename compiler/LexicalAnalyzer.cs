@@ -15,18 +15,18 @@ namespace Компилятор
         private readonly Dictionary<byte, Dictionary<string, byte>> keywords = new Keywords().Kw;
         
         /* работа лексического анализатора*/
-        public Queue<byte> process()
+        public Queue<LexemeCoord> process()
         {
-            var lexemes = new Queue<byte>();
+            var lexemes = new Queue<LexemeCoord>();
             while (!InputOutput.isEnd)
             {
-                lexemes.Enqueue(NextSym());
+                lexemes.Enqueue(new LexemeCoord(NextSym(), token));
             }
 
-            foreach (var VARIABLE in lexemes)
+            /*foreach (var VARIABLE in lexemes)
             {
-                Console.Write($"{VARIABLE}\t");
-            }                Console.WriteLine();
+                Console.Write($"{VARIABLE.Lexem}\t");
+            }                Console.WriteLine();*/
 
             return lexemes;
         }

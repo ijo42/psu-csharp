@@ -2,18 +2,23 @@ namespace Компилятор
 {
     class SyntaxAnalyzer
     {
-        private readonly Queue<byte> _lexemes;
+        private readonly Queue<LexemeCoord> _lexemes;
 
-        public SyntaxAnalyzer(Queue<byte> lexemes)
+        public SyntaxAnalyzer(Queue<LexemeCoord> lexemes)
         {
             _lexemes = lexemes;
+        }
+
+        TextPosition position()
+        {
+            return _lexemes.Peek().Position;
         }
 
         byte token()
         {
             try
             {
-                return _lexemes.Peek();
+                return _lexemes.Peek().Lexem;
             }
             catch
             {
@@ -21,7 +26,10 @@ namespace Компилятор
             }
         }
 
-        byte nextsym() => _lexemes.Dequeue();
+        LexemeCoord nextsym()
+        {
+            return _lexemes.Dequeue();
+        }
 
         void accept(byte expectedtoken)
         {
@@ -51,7 +59,9 @@ namespace Компилятор
 
         void error(byte expectedToken, byte token)
         {
-            Console.WriteLine($"Ошибка синтаксиса - {ErrorCodes.Dictionary[203]}: ожидалось {expectedToken}, найдено {token}");
+            InputOutput.Error(203, position());
+            InputOutput.printSyntaxError();
+            Console.WriteLine($"\r Ожидалось {expectedToken}, найдено {token}");
         }
 
         void skip(HashSet<byte> suitable)
@@ -86,7 +96,7 @@ namespace Компилятор
 
         void statementpart()
         {
-            accept(Lexemes.beginsy);
+            accept(Lexemes.beginsy, new HashSet<byte> {Lexemes.beginsy});
 
             do
             {
@@ -119,9 +129,11 @@ namespace Компилятор
                     accept(Lexemes.endsy);
                     break;
                 case Lexemes.forsy:
+                    accept(Lexemes.forsy);
                     forstatement();
                     break;
                 case Lexemes.withsy:
+                    accept(Lexemes.withsy, new HashSet<byte>{Lexemes.withsy, Lexemes.ident});
                     withpart();
                     break;
             }
@@ -133,7 +145,7 @@ namespace Компилятор
                 accept(Lexemes.ident);
             } while (commaNext());
             accept(Lexemes.dosy);
-            expression();
+            statement();
         }
 
         void assignpart()
@@ -143,14 +155,13 @@ namespace Компилятор
             expression();
         }
 
+        readonly List<byte> relations = new()
+        {
+            Lexemes.equal, Lexemes.greater, Lexemes.later,
+            Lexemes.greaterequal, Lexemes.laterequal, Lexemes.latergreater, Lexemes.insy
+        };
         void expression()
         {
-            var relations = new List<byte>
-            {
-                Lexemes.equal, Lexemes.greater, Lexemes.later,
-                Lexemes.greaterequal, Lexemes.laterequal, Lexemes.latergreater, Lexemes.insy
-            };
-
             simpleExpression();
             if (relations.Contains(token()))
             {
@@ -274,7 +285,7 @@ namespace Компилятор
             accept(Lexemes.equal);
             type();
         }
-
+        
         void varpart()
         {
             if (token() == Lexemes.varsy)
@@ -290,7 +301,7 @@ namespace Компилятор
 
         private readonly HashSet<byte> varContinue = new()
         {
-            Lexemes.colon, Lexemes.ident
+            Lexemes.colon, Lexemes.ident, Lexemes.comma
         };
 
         void vardeclaration()

@@ -7,17 +7,18 @@ namespace Компилятор
         const byte ERRMAX = 9;
         public static char Ch { get; private set; }
         public static TextPosition positionNow;
-        public static bool isEnd = false;
+        public static bool isEnd;
         private static string line;
         private static byte lastInLine = 0;
         private static List<Err> err;
         private static StreamReader file;
         private static uint errCount = 0;
+        private static List<string> fileContent = new();
 
         /* открытие файла */
-        public static void open(string path)
+        public static void open(string path0)
         {
-            file = File.OpenText(path);
+            file = File.OpenText(path0);
             ReadNextLine();
             Ch = line[0];
         }
@@ -43,43 +44,51 @@ namespace Компилятор
                 do
                 {
                     ReadNextLine();
-                    positionNow.lineNumber++;
                 } while (line.Length == 0 && !isEnd);
                 positionNow.charNumber = 0;
            }
            else ++positionNow.charNumber;
            Ch = line[positionNow.charNumber];
         }
-
+    
     /* вывод строки */
-        private static void ListThisLine()
+    public static void ListThisLine()
         {
             Console.WriteLine(line);
         }
 
         /* инкремент позиции для строки */
-        private static void ReadNextLine()
+        public static void ReadNextLine()
         {
             if (!file.EndOfStream)
             {
                 line = file.ReadLine();
+                fileContent.Add(line);
                 err = new List<Err>();
                 lastInLine = (byte)(line.Length - 1);
+                positionNow.lineNumber++;
             }
             else
             {
                 End();
             }
+            
         }
 
         static void End()
         {
             isEnd = true;
-            Console.WriteLine($"Лексический анализ завершен: ошибок — {errCount}!");
+            Console.WriteLine($"Синтаксический анализ завершен: ошибок — {errCount}!");
+        }
+
+        public static void printSyntaxError()
+        {
+            Console.WriteLine(fileContent[(int)err[0].errorPosition.lineNumber-1]);
+            ListErrors();
         }
 
         /* вывод ошибок */
-        static void ListErrors()
+        public static void ListErrors()
         {
             var pos = 6 - $"{positionNow.lineNumber} ".Length;
             string s;
@@ -89,7 +98,7 @@ namespace Компилятор
                 s = "**";
                 if (errCount < 10) s += "0";
                 s += $"{errCount}**";
-                while (s.Length +5 < pos + item.errorPosition.charNumber) s += " ";
+                while (s.Length +3 < pos + item.errorPosition.charNumber) s += " ";
                 s += $"^ ошибка {item.errorCode}";
                 Console.WriteLine(s);
             }

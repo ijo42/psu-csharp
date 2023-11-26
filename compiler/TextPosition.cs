@@ -1,6 +1,6 @@
 namespace Компилятор;
 
-struct TextPosition
+public struct TextPosition
 {
     public uint lineNumber; // номер строки
     public byte charNumber; // номер позиции в строке
