@@ -6,8 +6,8 @@ namespace Компилятор
     {
         public static readonly Dictionary<string, byte> Kw = new()
         {
-            ["real"] = 1,
-            ["integer"] = 2
+            ["real"] = 82,
+            ["integer"] = 15,
         };
         
     }

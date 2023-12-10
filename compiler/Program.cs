@@ -5,7 +5,7 @@
         /* точка входа */
         static void Main()
         {
-            const string path = @"C:\Users\ijo42\RiderProjects\psu-csharp\compiler\examples\test2.pas";
+            const string path = @"/home/ijo42/RiderProjects/ConsoleApp1/compiler/examples/test2.pas";
             InputOutput.open(path);
             InputOutput.process();
         }

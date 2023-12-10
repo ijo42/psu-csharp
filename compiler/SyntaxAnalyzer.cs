@@ -3,9 +3,10 @@ namespace Компилятор
     class SyntaxAnalyzer
     {
         private readonly Func<byte> _lexicalNext;
-        private byte _lexeme;
+        private byte _lexeme = 255;
         private TextPosition _position;
         private string? errorMsg = null;
+        private int syntaxSegment = 0;
         public SyntaxAnalyzer(Func<byte> lexicalNext)
         {
             _lexicalNext = lexicalNext;
@@ -19,6 +20,7 @@ namespace Компилятор
 
         void NextSym()
         {
+            InputOutput.lexemes[syntaxSegment].Enqueue(_lexeme);
             _position = InputOutput.positionNow;
             _lexeme = InputOutput.isEnd ? (byte)255 : _lexicalNext();
         }
@@ -29,7 +31,7 @@ namespace Компилятор
         }
         void Accept(byte expectedtoken, HashSet<byte> suitable)
         {
-            if(_lexeme == 255)
+            if(_lexeme == 255 && expectedtoken != Lexemes.point)
                 return;
             if (_lexeme != expectedtoken)
             {
@@ -38,6 +40,8 @@ namespace Компилятор
                 if(suitable.Count > 0)
                     Skip(suitable);
                 Error(expectedtoken, l, pos);
+                if (InputOutput.isEnd)
+                    InputOutput.ListErrors();
             }
             NextSym();
         }
@@ -45,6 +49,13 @@ namespace Компилятор
         private bool CommaNext()
         {
             var o = _lexeme == Lexemes.comma;
+            if (o)
+                NextSym();
+            return o;
+        }
+        private bool SemicolonNext()
+        {
+            var o = _lexeme == Lexemes.semicolon;
             if (o)
                 NextSym();
             return o;
@@ -81,7 +92,9 @@ namespace Компилятор
             Labelpart();
             Constpart();
             Typepart();
+            syntaxSegment++;
             Varpart();
+            syntaxSegment++;
             // procfuncpart();
             // functionpart()
             Statementpart();
@@ -345,9 +358,9 @@ namespace Компилятор
                     Accept(Lexemes.intc);
                     flag = true;
                 break;
-                case Lexemes.ident:
+                case Lexemes.typesy:
                     // type name
-                    Accept(Lexemes.ident);
+                    Accept(Lexemes.typesy);
                     flag = true;
                     break;
             }
@@ -374,7 +387,7 @@ namespace Компилятор
                         do
                         {
                             Vardeclaration();
-                        } while (_lexeme == Lexemes.semicolon);
+                        } while (SemicolonNext());
                     }
                     Accept(Lexemes.endsy);
                     break;

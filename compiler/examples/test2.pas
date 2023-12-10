@@ -1,12 +1,12 @@
 program a;
 var { начало }
-    d : record k,b : integer end;
-    c, SS, 5 d : number; 
+    d : record k,b: real; v,e:real end;
+    m : record k,b: integer; v,e :real; v0:integer end;
+    k, SS, b : integer; 
+    ce, S, dv : real; 
  begin
- begin
-    k := o;
-    with d do
-    begin
-    end;
+       with d do
+       begin
+       k := 5.0;
+       end
  end
- end.

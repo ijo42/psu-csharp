@@ -14,6 +14,11 @@ namespace Компилятор
         private static StreamReader file;
         private static uint errCount = 0;
         private static List<string> fileContent = new();
+        // словарь переменных
+        public static Dictionary<string, VariableType>? varTypes = new();
+        public static Queue<byte> declaredTypes = new();
+        public static Queue<string> declaredIdents = new();
+        public static List<Queue<byte>> lexemes = new() {new Queue<byte>(), new Queue<byte>(), new Queue<byte>()};
 
         /* открытие файла */
         public static void open(string path0)
@@ -33,6 +38,9 @@ namespace Компилятор
             {
                 syntaxAnalyzer.Process();
             }
+
+            var semanticAnalyzer = new SemanticAnalyzer();
+            semanticAnalyzer.process();
         }
 
         /* инкремент позиции чтения */
@@ -83,7 +91,7 @@ namespace Компилятор
         }
 
         /* вывод ошибок */
-        static void ListErrors()
+        public static void ListErrors()
         {
             var pos = 6 - $"{positionNow.lineNumber} ".Length;
             string s;

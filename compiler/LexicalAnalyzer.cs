@@ -7,7 +7,7 @@ namespace Компилятор
     {
         private byte symbol; // код символа
         private TextPosition token; // позиция символа
-        private string addrName; // адрес идентификатора в таблице имен
+        private string ident;
         private int nmb_int; // значение целой константы
         private float nmb_float; // значение вещественной константы
         private char one_symbol; // значение символьной константы
@@ -16,10 +16,7 @@ namespace Компилятор
         
 
         /* работа лексического анализатора*/
-        public byte process()
-        {
-            return NextSym();
-        }
+        public byte process() => NextSym();
 
         private byte NextSym()
         {
@@ -32,14 +29,13 @@ namespace Компилятор
             //сканировать символ
             switch (InputOutput.Ch)
             {
-                // regexp для цифры
+                    
                 case var chr when char.IsDigit(chr):
                     nmb_int = 0;
                     while (InputOutput.Ch >= '0' && InputOutput.Ch <= '9')
                     {
                         var digit = (byte)(InputOutput.Ch - '0');
-                        if (nmb_int < MaxInt / 10 ||
-                        nmb_int == MaxInt / 10 &&
+                        if (nmb_int <= MaxInt / 10 &&
                         digit <= MaxInt % 10)
                             nmb_int = 10 * nmb_int + digit;
                         else
@@ -51,9 +47,22 @@ namespace Компилятор
                         }
                         InputOutput.NextCh();
                     }
-                    symbol = Lexemes.intc;
+
+                    if (InputOutput.Ch == '.')
+                    {
+                        InputOutput.NextCh();
+                        nmb_float = nmb_int;
+                        while (InputOutput.Ch >= '0' && InputOutput.Ch <= '9')
+                        {
+                            var digit = (byte)(InputOutput.Ch - '0');
+
+                            nmb_int = 10 * nmb_int + digit;
+                            InputOutput.NextCh();
+                        }
+                        symbol = Lexemes.floatc;
+                    } else
+                        symbol = Lexemes.intc;
                     break;
-                // regexp для буквы
                 case var chr when char.IsLetter(chr):
                     var name = "";
                     while  (char.IsLetter(InputOutput.Ch) || char.IsDigit(InputOutput.Ch))
@@ -69,13 +78,17 @@ namespace Компилятор
                         lengthEntry.TryGetValue(name, out keywordKey);
                     }
 
-                    //Types.Kw.TryGetValue(name, out var typeKey);
+                    if (Types.Kw.TryGetValue(name, out var typeKey))
+                        InputOutput.declaredTypes.Enqueue(typeKey);
 
-                    symbol = (byte)(keywordKey /*+ (typeKey > 0 ? Lexemes.typesy : 0)*/);
+                    symbol = (byte)(keywordKey + (typeKey > 0 ? Lexemes.typesy : 0));
 
                     /* ошибка если ключевого слова не найдено */
-                    
-                    symbol = symbol == 0 ? Lexemes.ident : symbol;
+                    if (symbol == 0)
+                    {
+                        symbol = Lexemes.ident;
+                        InputOutput.declaredIdents.Enqueue(name);
+                    }
 
                     break;
                 case '<':
